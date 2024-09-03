@@ -97,6 +97,24 @@ public class PanGestureRecognizer : GestureRecognizer
             return;
         }
 
+        // Calculate the final pan position
+        var currentPosition = e.GetPosition(_parent);
+        var delta = currentPosition - _startPosition;
+
+        CompletePan(delta);
+
+        e.Handled = true;
+    }
+
+    /// <inheritdoc />
+    protected override void PointerCaptureLost(IPointer pointer)
+    {
+        CompletePan(_delta);
+    }
+
+    private void CompletePan(Point delta)
+    {
+        _delta = default;
         _tracking = null;
 
         if (_state != PanGestureStatus.Running)
@@ -105,31 +123,8 @@ public class PanGestureRecognizer : GestureRecognizer
         }
 
         _state = PanGestureStatus.Completed;
-        var currentPosition = e.GetPosition(_parent);
-        var delta = currentPosition - _startPosition;
-        OnPan?.Invoke(_inputElement,
+        OnPan?.Invoke(
+            _inputElement,
             new PanUpdatedEventArgs(PanGestureStatus.Completed, delta.X, delta.Y));
-
-        e.Handled = true;
-    }
-
-    /// <inheritdoc />
-    protected override void PointerCaptureLost(IPointer pointer)
-    {
-        var delta = _delta;
-
-        _tracking = null;
-        _delta = default;
-
-        if (_state != PanGestureStatus.Running)
-        {
-            return;
-        }
-
-        OnPan?.Invoke(_inputElement,
-            new PanUpdatedEventArgs(
-                PanGestureStatus.Completed,
-                delta.X,
-                delta.Y));
     }
 }
