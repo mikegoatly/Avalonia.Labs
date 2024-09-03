@@ -64,6 +64,7 @@ public class Swipe : Grid
     private readonly ContentPresenter _leftContainer;
     private readonly ContentPresenter _bodyContainer;
     private readonly TransformOperationsTransition _transition;
+    private readonly PanGestureRecognizer _panGestureRecognizer;
 
     private double _initialX;
     private double _currentX;
@@ -92,14 +93,15 @@ public class Swipe : Grid
             Easing = new CubicEaseOut()
         };
 
-        var panGestureRecognizer = new PanGestureRecognizer
+        _panGestureRecognizer = new PanGestureRecognizer
         {
-            Direction = PanDirection.Left | PanDirection.Right, Threshold = 10,
+            Direction = PanDirection.None,
+            Threshold = 10,
         };
 
-        panGestureRecognizer.OnPan += PanUpdated;
+        _panGestureRecognizer.OnPan += PanUpdated;
 
-        _bodyContainer.GestureRecognizers.Add(panGestureRecognizer);
+        _bodyContainer.GestureRecognizers.Add(_panGestureRecognizer);
 
         Children.Add(_rightContainer);
         Children.Add(_leftContainer);
@@ -107,19 +109,40 @@ public class Swipe : Grid
     }
 
     /// <inheritdoc />
-    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs e)
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
-        base.OnPropertyChanged(e);
+        base.OnPropertyChanged(change);
 
-        if (nameof(Content) == e.Property.Name)
+        if (change.Property == ContentProperty)
         {
-            _bodyContainer.Content = e.NewValue;
+            _bodyContainer.Content = change.NewValue;
             return;
         }
-
-        if (nameof(SwipeState) == e.Property.Name)
+        else if (change.Property == SwipeStateProperty)
         {
             ProcessSwipe(SwipeState);
+        }
+        else if (change.Property == LeftTemplateProperty)
+        {
+            if (change.NewValue is not null)
+            {
+                _panGestureRecognizer.Direction |= PanDirection.Right;
+            }
+            else
+            {
+                _panGestureRecognizer.Direction &= ~PanDirection.Right;
+            }
+        }
+        else if (change.Property == RightTemplateProperty)
+        {
+            if (change.NewValue is not null)
+            {
+                _panGestureRecognizer.Direction |= PanDirection.Left;
+            }
+            else
+            {
+                _panGestureRecognizer.Direction &= ~PanDirection.Left;
+            }
         }
     }
 
