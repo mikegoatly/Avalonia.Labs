@@ -101,9 +101,12 @@ public class PanGestureRecognizer : GestureRecognizer
         var currentPosition = e.GetPosition(_parent);
         var delta = currentPosition - _startPosition;
 
-        CompletePan(delta);
+        // Only handle the event if the pan gesture is running. We want to allow
+        // other handlers to process the event if the gesture is not running; without this
+        // controls like ListBox won't work correctly.
+        e.Handled = _state == PanGestureStatus.Running;
 
-        e.Handled = true;
+        CompletePan(delta);
     }
 
     /// <inheritdoc />
